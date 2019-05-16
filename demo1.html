@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="author" content="霍艳杰">
+    <title>WebSocket</title>
+    <script src="./jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css">
+
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css">
+
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"></script>
+    <style>
+        .alert{
+            width: 20%;
+            margin: 0 auto;
+            position: fixed;
+            top: 10px;
+            left: 40%;
+            display: none;
+        }
+        body{
+            padding: 100px 60px 0 60px;
+        }
+        #demo_one{
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            color: #555;
+            background-color: #fff;
+            background-image: none;
+            border: 1px solid #ccc;
+            min-height: 200px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        #demo_one li{
+            text-decoration: none;
+            list-style: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="alert alert-warning alert-dismissible" role="alert" id="alertMsg">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <p>1212</p>
+    </div>
+    <div>
+        <div class="input-group">
+            <span class="input-group-addon">昵称</span>
+            <input type="text" class="form-control" placeholder="昵称" id="nickName">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button" id="beforeConnect">建立连接</button>
+                <button class="btn btn-default" type="button" id="closeConnect">关闭连接</button>
+            </span>
+        </div>
+        <!-- <textarea name="" id="inputText" cols="30" rows="10" class="form-control"></textarea> -->
+        <ul id="demo_one"></ul>
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="发送信息" id="inputText">
+            <span class="input-group-btn">
+                <button class="btn btn-default" type="button" id="submitText">发送</button>
+            </span>
+        </div>
+
+
+    </div>
+
+
+    <script>
+        var ws;
+        // msg
+        function getAlertMsg(val) {
+            $('#alertMsg').css('display', 'block')
+            $('#alertMsg>p').text(val)
+            setTimeout(() => {
+                $('#alertMsg').css('display', 'none')
+            }, 2000);
+        }
+        // CONNECTING：值为0，表示正在连接。
+        // OPEN：值为1，表示连接成功，可以通信了。
+        // CLOSING：值为2，表示连接正在关闭。
+        // CLOSED：值为3，表示连接已经关闭，或者打开连接失败。
+        $('#submitText').click(function () {
+            // $('#demo_one').append(`<li>发送给服务器的：${$('#inputText').val()}</li>`)
+            if(!ws){
+                getAlertMsg('请先建立连接')
+                return
+            }
+            let obj = {
+                type: "msg",
+                data: $('#inputText').val()
+            }
+            ws.send(JSON.stringify(obj))
+        })
+        // 建立连接
+        $('#beforeConnect').click(function () {
+            // var ws = new WebSocket("ws://123.207.167.163:9010/ajaxchattest");
+            // var ws = new WebSocket("wss://127.0.0.1:8001/");
+            ws = new WebSocket("ws://127.0.0.1:3030");
+            console.log(ws.readyState)
+
+            // 如果要指定多个回调函数，可以使用addEventListener方法。
+            // ws.addEventListener('open', function (event) {
+            //     ws.send('Hello Server!');
+            // });
+            ws.onopen = function (evt) {
+                console.log(evt, "连接成功...");
+                
+                console.log(ws.readyState)
+                getAlertMsg("连接成功...")
+                let obj = {
+                    type: "nickName",
+                    data: $('#nickName').val()
+                }
+                ws.send(JSON.stringify(obj))
+            };
+
+
+            ws.onmessage = function (evt) {
+                console.log(evt,'//////EVT')
+                $('#demo_one').append(`<li>昵称：${$('#nickName').val()}  内容：${JSON.parse(evt.data).data}</li>`)
+                // document.write(evt.data)
+                console.log('接受到消息...' +  JSON.parse(evt.data));
+                // ws.close();
+            };
+            // for (let index = 0; index < array.length; index++) {
+            //     const element = array[index];
+                
+            // }
+            // for (const key in object) {
+            //     if (object.hasOwnProperty(key)) {
+            //         const element = object[key];
+                    
+            //     }
+            // }
+            ws.onerror = function () {
+                console.log('连接失败...');
+                getAlertMsg("连接失败...")
+            }
+            ws.onclose = function (evt) {
+                console.log("连接关闭...");
+                getAlertMsg("连接关闭...")
+            };
+        })
+        // 关闭连接
+        $('#closeConnect').click(function () {
+            if(!ws){
+                getAlertMsg('请先建立连接')
+                return
+            }
+            ws.close()
+            getAlertMsg("关闭连接...")
+        })
+    </script>
+</body>
+
+</html>
